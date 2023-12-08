@@ -1,0 +1,25 @@
+{
+    "name": "pdf-library",
+    "version": "1.0.0",
+    "description": "A JavaScript library for working with PDF documents using pdf.js",
+    "main": "dist/pdf-library.js",
+    "scripts": {
+        "build": "webpack --mode production",
+        "start": "webpack-dev-server --open"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/KyoYasuo/pdf_library.git"
+    },
+    "keywords": [
+        "pdf",
+        "pdf.js",
+        "javascript",
+        "library"
+    ],
+    "author": "TcaT",
+    "license": "MIT",
+    "dependencies": {
+        "pdfjs-dist": "^2.11.338"
+    }
+}
