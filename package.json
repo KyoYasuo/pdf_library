@@ -1,25 +1,34 @@
 {
-    "name": "pdf-library",
-    "version": "1.0.0",
-    "description": "A JavaScript library for working with PDF documents using pdf.js",
-    "main": "dist/pdf-library.js",
-    "scripts": {
-        "build": "webpack --mode production",
-        "start": "webpack-dev-server --open"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/KyoYasuo/pdf_library.git"
-    },
-    "keywords": [
-        "pdf",
-        "pdf.js",
-        "javascript",
-        "library"
-    ],
-    "author": "TcaT",
-    "license": "MIT",
-    "dependencies": {
-        "pdfjs-dist": "^2.11.338"
-    }
+  "name": "pdf_library",
+  "version": "1.0.0",
+  "description": "A JavaScript library for displaying, navigating, and editing PDF documents.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KyoYasuo/pdf_library.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "PDF editing",
+    "Node.js",
+    "PDF viewer",
+    "PDF navigation",
+    "PDF zoom",
+    "PDF highlighting",
+    "PDF commenting",
+    "PDF manipulation",
+    "Version control"
+  ],
+  "author": "TcaT",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KyoYasuo/pdf_library/issues"
+  },
+  "homepage": "https://github.com/KyoYasuo/pdf_library#readme",
+  "dependencies": {
+    "pdfjs-dist": "^4.0.269"
+  }
 }
