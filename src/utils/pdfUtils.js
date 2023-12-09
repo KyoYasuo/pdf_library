@@ -17,6 +17,7 @@ export function displayPDF(fileUrl, canvas) {
         // Render all pages
         await renderAllPages().then(() => {
             for (let i = 1; i <= numPages; i++) {
+                const canvas = document.getElementById(`pdfCanvas${i}`);
                 pdfContainer.appendChild(canvas);
             }
         });
