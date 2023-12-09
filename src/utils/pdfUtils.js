@@ -1,49 +1,41 @@
 // pdfUtils.js
 
-export function uploadPDF(file) {
-    // Logic to handle file upload
-}
+export function displayPDF(fileUrl, canvas) {
+    // Create a new PDFJS object
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
 
-export function displayPDF(file, container) {
-    // Logic to display the PDF in the specified container element
-}
+    // Set worker source path
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.js/pdf.worker.js';
 
-export function navigateToPage(pageNumber) {
-    // Logic to navigate to the specified page number
-}
+    // Load PDF document
+    pdfjsLib.getDocument(fileUrl).promise.then(function (pdf) {
+        // Get the number of pages in the PDF
+        const numPages = pdf.numPages;
 
-export function zoomIn() {
-    // Logic to zoom in on the PDF
-}
+        // Set the initial page number
+        let pageNumber = 1;
 
-export function zoomOut() {
-    // Logic to zoom out on the PDF
-}
+        // Render all pages
+        renderAllPages();
 
-export function highlightText(text) {
-    // Logic to highlight the specified text in the PDF
-}
+        function renderPage(pageNumber) {
+            // Fetch the specified page from the PDF
+            pdf.getPage(pageNumber).then(function (page) {
+                const viewport = page.getViewport({ scale: 1.0 });
 
-export function addComment(comment) {
-    // Logic to add a comment to the PDF
-}
+                // Set the canvas dimensions based on the viewport
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
 
-export function insertPage(pageNumber, content) {
-    // Logic to insert a new page at the specified page number with the given content
-}
+                // Render the PDF page on the canvas
+                page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport });
+            });
+        }
 
-export function deletePage(pageNumber) {
-    // Logic to delete the specified page from the PDF
-}
-
-export function reorderPages(pageOrder) {
-    // Logic to reorder the pages in the PDF based on the specified page order
-}
-
-export function trackChanges() {
-    // Logic to track changes in the PDF
-}
-
-export function getVersionHistory() {
-    // Logic to get the version history of the PDF
+        function renderAllPages() {
+            for (let i = 1; i <= numPages; i++) {
+                renderPage(i);
+            }
+        }
+    });
 }

@@ -11,20 +11,20 @@ export function initializePDFLibrary() {
     const canvas = document.createElement('canvas');
     canvas.id = 'pdfCanvas';
 
-    // Create navigation buttons
-    const prevButton = document.createElement('button');
-    prevButton.textContent = 'Previous Page';
-    prevButton.addEventListener('click', handlePrevPage);
+    // // Create navigation buttons
+    // const prevButton = document.createElement('button');
+    // prevButton.textContent = 'Previous Page';
+    // prevButton.addEventListener('click', handlePrevPage);
 
-    const nextButton = document.createElement('button');
-    nextButton.textContent = 'Next Page';
-    nextButton.addEventListener('click', handleNextPage);
+    // const nextButton = document.createElement('button');
+    // nextButton.textContent = 'Next Page';
+    // nextButton.addEventListener('click', handleNextPage);
 
     // Append components to the pdfContainer
     pdfContainer.appendChild(fileInput);
     pdfContainer.appendChild(canvas);
-    pdfContainer.appendChild(prevButton);
-    pdfContainer.appendChild(nextButton);
+    // pdfContainer.appendChild(prevButton);
+    // pdfContainer.appendChild(nextButton);
 
     // Handle file input change event
     fileInput.addEventListener('change', handleFileInputChange);
@@ -32,46 +32,52 @@ export function initializePDFLibrary() {
 
 function handleFileInputChange(event) {
     const file = event.target.files[0];
+    const canvas = document.getElementById('pdfCanvas');
+    
+    // Clear the canvas
+    canvas.width = 0;
+    canvas.height = 0;
+
     // Load and display the PDF file
-    displayPDF(file);
+    displayPDF(file, canvas);
 }
 
-export function handleNavigation(pageNumber) {
-    navigateToPage(pageNumber);
-}
+// export function handleNavigation(pageNumber) {
+//     navigateToPage(pageNumber);
+// }
 
-export function handleZoomIn() {
-    zoomIn();
-}
+// export function handleZoomIn() {
+//     zoomIn();
+// }
 
-export function handleZoomOut() {
-    zoomOut();
-}
+// export function handleZoomOut() {
+//     zoomOut();
+// }
 
-export function handleHighlight(text) {
-    highlightText(text);
-}
+// export function handleHighlight(text) {
+//     highlightText(text);
+// }
 
-export function handleAddComment(comment) {
-    addComment(comment);
-}
+// export function handleAddComment(comment) {
+//     addComment(comment);
+// }
 
-export function handleInsertPage(pageNumber, content) {
-    insertPage(pageNumber, content);
-}
+// export function handleInsertPage(pageNumber, content) {
+//     insertPage(pageNumber, content);
+// }
 
-export function handleDeletePage(pageNumber) {
-    deletePage(pageNumber);
-}
+// export function handleDeletePage(pageNumber) {
+//     deletePage(pageNumber);
+// }
 
-export function handleReorderPages(pageOrder) {
-    reorderPages(pageOrder);
-}
+// export function handleReorderPages(pageOrder) {
+//     reorderPages(pageOrder);
+// }
 
-export function handleTrackChanges() {
-    trackChanges();
-}
+// export function handleTrackChanges() {
+//     trackChanges();
+// }
 
-export function handleGetVersionHistory() {
-    getVersionHistory();
-}
+// export function handleGetVersionHistory() {
+//     getVersionHistory();
+// }
