@@ -27,9 +27,4 @@ module.exports = {
             'pdfjs-dist/build/pdf.worker': 'pdfjs-dist/webpack/pdf.worker.entry',
         },
     },
-    optimization: {
-        splitChunks: {
-            chunks: 'all',
-        },
-    },
 };
