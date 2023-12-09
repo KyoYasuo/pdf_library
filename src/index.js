@@ -1,7 +1,7 @@
 import PDFViewer from './components/PDFViewer';
 import PDFUploader from './components/PDFUploader';
 
-const appContainer = document.getElementById('app');
+const appContainer = document.getElementById('pdf-viewer');
 
 // Create PDFViewer instance
 const pdfViewer = new PDFViewer();

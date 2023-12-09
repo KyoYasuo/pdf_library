@@ -1,6 +1,6 @@
-import { PDFDocumentProxy } from 'pdfjs-dist';
-import PDFControls from './PDFControls';
+import { getDocument } from 'pdfjs-dist';
 import { getPageText } from '../utils/pdfUtils';
+import PDFControls from './PDFControls';
 
 class PDFViewer {
     constructor() {
@@ -20,10 +20,13 @@ class PDFViewer {
             onTrackChanges: this.onTrackChanges,
             onVersionControl: this.onVersionControl,
         });
+
+        this.onNextPage = this.onNextPage.bind(this);
+        this.onPrevPage = this.onPrevPage.bind(this);
     }
 
     loadPDF(pdfData) {
-        PDFJS.getDocument(pdfData).promise.then((pdf) => {
+        getDocument(pdfData).promise.then((pdf) => {
             this.pdfDoc = pdf;
             this.renderPage(this.currentPage);
         });
@@ -49,55 +52,55 @@ class PDFViewer {
         });
     }
 
-    onNextPage = () => {
+    onNextPage() {
         if (this.currentPage < this.pdfDoc.numPages) {
             this.currentPage++;
             this.renderPage(this.currentPage);
         }
-    };
+    }
 
-    onPrevPage = () => {
+    onPrevPage() {
         if (this.currentPage > 1) {
             this.currentPage--;
             this.renderPage(this.currentPage);
         }
-    };
+    }
 
-    onZoomIn = () => {
+    onZoomIn() {
         // Implement zoom in functionality
-    };
+    }
 
-    onZoomOut = () => {
+    onZoomOut() {
         // Implement zoom out functionality
-    };
+    }
 
-    onHighlightText = () => {
+    onHighlightText() {
         // Implement text highlighting functionality
-    };
+    }
 
-    onAddComment = () => {
+    onAddComment() {
         // Implement adding comments functionality
-    };
+    }
 
-    onInsertPage = () => {
+    onInsertPage() {
         // Implement inserting a new page functionality
-    };
+    }
 
-    onDeletePage = () => {
+    onDeletePage() {
         // Implement deleting a page functionality
-    };
+    }
 
-    onReorderPages = () => {
+    onReorderPages() {
         // Implement reordering pages functionality
-    };
+    }
 
-    onTrackChanges = () => {
+    onTrackChanges() {
         // Implement tracking changes functionality
-    };
+    }
 
-    onVersionControl = () => {
+    onVersionControl() {
         // Implement version control functionality
-    };
+    }
 
     render() {
         this.viewerContainer = document.createElement('div');
