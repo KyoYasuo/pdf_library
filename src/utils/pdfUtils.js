@@ -2,33 +2,40 @@
 
 export function displayPDF(fileUrl, canvas) {
     // Create a new PDFJS object
-    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    const { pdfjsLib } = globalThis;
 
     // Set worker source path
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.js/pdf.worker.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.js/pdf.worker.mjs';
 
     // Load PDF document
     pdfjsLib.getDocument(fileUrl).promise.then(function (pdf) {
         // Get the number of pages in the PDF
         const numPages = pdf.numPages;
 
-        // Set the initial page number
-        let pageNumber = 1;
-
         // Render all pages
         renderAllPages();
 
         function renderPage(pageNumber) {
-            // Fetch the specified page from the PDF
             pdf.getPage(pageNumber).then(function (page) {
-                const viewport = page.getViewport({ scale: 1.0 });
+                console.log('Page loaded');
 
-                // Set the canvas dimensions based on the viewport
-                canvas.width = viewport.width;
+                var scale = 1.5;
+                var viewport = page.getViewport({ scale: scale });
+
+                // Prepare canvas using PDF page dimensions
+                var context = canvas.getContext('2d');
                 canvas.height = viewport.height;
+                canvas.width = viewport.width;
 
-                // Render the PDF page on the canvas
-                page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport });
+                // Render PDF page into canvas context
+                var renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                var renderTask = page.render(renderContext);
+                renderTask.promise.then(function () {
+                    console.log('Page rendered');
+                });
             });
         }
 
@@ -37,5 +44,8 @@ export function displayPDF(fileUrl, canvas) {
                 renderPage(i);
             }
         }
+    }, function (reason) {
+        // PDF loading error
+        console.error(reason);
     });
 }
