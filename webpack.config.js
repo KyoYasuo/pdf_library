@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = {
+    mode: 'production',
     entry: './src/index.js',
     output: {
         filename: 'bundle.js',
@@ -20,6 +21,10 @@ module.exports = {
             },
         ],
     },
+    resolve: {
+        alias: {
+            'pdfjs-dist/build/pdf': 'pdfjs-dist/webpack',
+            'pdfjs-dist/build/pdf.worker': 'pdfjs-dist/webpack/pdf.worker.entry',
+        },
+    },
 };
-
-module.exports = config;
