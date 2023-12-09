@@ -8,7 +8,7 @@ export function displayPDF(fileUrl, canvas) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.js/pdf.worker.mjs';
 
     // Load PDF document
-    pdfjsLib.getDocument(fileUrl).promise.then(function (pdf) {
+    pdfjsLib.getDocument('https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf').promise.then(function (pdf) {
         // Get the number of pages in the PDF
         const numPages = pdf.numPages;
 
@@ -17,12 +17,13 @@ export function displayPDF(fileUrl, canvas) {
 
         function renderPage(pageNumber) {
             pdf.getPage(pageNumber).then(function (page) {
-                console.log('Page loaded');
+                console.log(pageNumber, 'Page loaded');
 
                 var scale = 1.5;
                 var viewport = page.getViewport({ scale: scale });
 
                 // Prepare canvas using PDF page dimensions
+                const canvas = document.createElement('canvas' + pageNumber);
                 var context = canvas.getContext('2d');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
@@ -34,7 +35,7 @@ export function displayPDF(fileUrl, canvas) {
                 };
                 var renderTask = page.render(renderContext);
                 renderTask.promise.then(function () {
-                    console.log('Page rendered');
+                    console.log(pageNumber, 'Page rendered');
                 });
             });
         }
