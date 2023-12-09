@@ -17,7 +17,8 @@ export function displayPDF(fileUrl, canvas) {
         // Render all pages
         await renderAllPages().then(() => {
             for (let i = 1; i <= numPages; i++) {
-                const canvas = document.getElementById(`pdfCanvas${i}`);
+                const id = "pdfCanvas" + i;
+                const canvas = document.getElementById(id);
                 pdfContainer.appendChild(canvas);
             }
         });
@@ -44,7 +45,7 @@ export function displayPDF(fileUrl, canvas) {
                 };
                 var renderTask = page.render(renderContext);
                 renderTask.promise.then(function () {
-                    console.log(pageNumber, 'Page rendered');
+                    console.log(canvas.id, 'Page rendered');
                 });
             });
         }
