@@ -8,8 +8,8 @@ export function initializePDFLibrary() {
     fileInput.type = 'file';
 
     // Create canvas element for displaying the PDF
-    const canvas = document.createElement('canvas');
-    canvas.id = 'pdfCanvas';
+    // const canvas = document.createElement('canvas');
+    // canvas.id = 'pdfCanvas';
 
     // // Create navigation buttons
     // const prevButton = document.createElement('button');
@@ -22,7 +22,7 @@ export function initializePDFLibrary() {
 
     // Append components to the pdfContainer
     pdfContainer.appendChild(fileInput);
-    pdfContainer.appendChild(canvas);
+    // pdfContainer.appendChild(canvas);
     // pdfContainer.appendChild(prevButton);
     // pdfContainer.appendChild(nextButton);
 
@@ -32,12 +32,12 @@ export function initializePDFLibrary() {
 
 function handleFileInputChange(event) {
     const file = event.target.files[0];
-    const canvas = document.getElementById('pdfCanvas');
+    // const canvas = document.getElementById('pdfCanvas');
     
     // Clear the canvas
-    canvas.width = 0;
-    canvas.height = 0;
+    // canvas.width = 0;
+    // canvas.height = 0;
 
     // Load and display the PDF file
-    displayPDF(file, canvas);
+    displayPDF(file);
 }

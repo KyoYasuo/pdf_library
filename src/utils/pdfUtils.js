@@ -23,7 +23,7 @@ export function displayPDF(fileUrl, canvas) {
                 var viewport = page.getViewport({ scale: scale });
 
                 // Prepare canvas using PDF page dimensions
-                const canvas = document.createElement('canvas' + pageNumber);
+                const canvas = document.createElement(`canvas${pageNumber}`);
                 var context = canvas.getContext('2d');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
