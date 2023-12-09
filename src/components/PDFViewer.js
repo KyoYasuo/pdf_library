@@ -6,7 +6,6 @@ class PDFViewer {
     constructor() {
         this.pdfDoc = null;
         this.currentPage = 1;
-
         this.controls = new PDFControls({
             onNextPage: this.onNextPage,
             onPrevPage: this.onPrevPage,
@@ -26,10 +25,15 @@ class PDFViewer {
     }
 
     loadPDF(pdfData) {
+        this.setWorkerSource();
         getDocument(pdfData).promise.then((pdf) => {
             this.pdfDoc = pdf;
             this.renderPage(this.currentPage);
         });
+    }
+
+    setWorkerSource() {
+        PDFJS.GlobalWorkerOptions.workerSrc = 'path/to/pdf.worker.js';
     }
 
     renderPage(pageNumber) {
@@ -42,14 +46,17 @@ class PDFViewer {
             canvas.height = viewport.height;
 
             page.render({ canvasContext: context, viewport }).promise.then(() => {
-                const pageText = getPageText(page); // Implement your own logic to extract text from the page
-                // Add code to handle highlighting, adding comments, etc.
+                const pageText = getPageText(page);
+                // Implement code for handling highlighting, adding comments, etc.
 
-                // Append the canvas to the viewer container
-                this.viewerContainer.innerHTML = '';
-                this.viewerContainer.appendChild(canvas);
+                this.updateViewerContainer(canvas);
             });
         });
+    }
+
+    updateViewerContainer(canvas) {
+        this.viewerContainer.innerHTML = '';
+        this.viewerContainer.appendChild(canvas);
     }
 
     onNextPage() {
