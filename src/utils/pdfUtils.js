@@ -1,19 +1,25 @@
 // pdfUtils.js
 
 export function displayPDF(fileUrl, canvas) {
-    // Create a new PDFJS object
+
+    const pdfContainer = document.getElementById('pdfContainer');
+
     const { pdfjsLib } = globalThis;
 
     // Set worker source path
     pdfjsLib.GlobalWorkerOptions.workerSrc = '../pdf.js/pdf.worker.mjs';
 
     // Load PDF document
-    pdfjsLib.getDocument('https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf').promise.then(function (pdf) {
+    pdfjsLib.getDocument('https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf').promise.then(async function (pdf) {
         // Get the number of pages in the PDF
         const numPages = pdf.numPages;
 
         // Render all pages
-        renderAllPages();
+        await renderAllPages().then(() => {
+            for (let i = 1; i <= numPages; i++) {
+                pdfContainer.appendChild(canvas);
+            }
+        });
 
         function renderPage(pageNumber) {
             pdf.getPage(pageNumber).then(function (page) {
@@ -23,7 +29,9 @@ export function displayPDF(fileUrl, canvas) {
                 var viewport = page.getViewport({ scale: scale });
 
                 // Prepare canvas using PDF page dimensions
-                const canvas = document.createElement(`canvas${pageNumber}`);
+                const canvas = document.createElement('canvas');
+                canvas.id = `pdfCanvas${pageNumber}`;
+                // pdfContainer.appendChild(canvas);
                 var context = canvas.getContext('2d');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
@@ -40,7 +48,7 @@ export function displayPDF(fileUrl, canvas) {
             });
         }
 
-        function renderAllPages() {
+        async function renderAllPages() {
             for (let i = 1; i <= numPages; i++) {
                 renderPage(i);
             }
