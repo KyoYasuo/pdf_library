@@ -30,5 +30,8 @@
   "homepage": "https://github.com/KyoYasuo/pdf_library#readme",
   "dependencies": {
     "pdfjs-dist": "^4.0.269"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
