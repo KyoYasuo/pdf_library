@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Canvas Circle Drawing</title>
+    <style>
+      #canvas {
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <label for="strokeColor">Stroke Color:</label>
+    <input type="color" id="strokeColor" value="#000000" />
+
+    <label for="fillColor">Fill Color:</label>
+    <input type="color" id="fillColor" value="#ff0000" />
+
+    <label for="thickness">Thickness:</label>
+    <input type="range" id="thickness" min="1" max="10" value="1" />
+
+    <label for="opacity">Opacity:</label>
+    <input type="range" id="opacity" min="0" max="1" step="0.1" value="1" />
+
+    <script>
+      // Get the canvas element and context
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      let isDragging = false;
+      let startX, startY;
+      let strokeColor = document.getElementById("strokeColor").value;
+      let fillColor = document.getElementById("fillColor").value;
+      let lineThickness = document.getElementById("thickness").value;
+      let opacity = document.getElementById("opacity").value;
+
+      function drawCircle(x, y, radius) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+        ctx.fillStyle = `rgba(${parseInt(
+          fillColor.slice(-6, -4),
+          16
+        )}, ${parseInt(fillColor.slice(-4, -2), 16)}, ${parseInt(
+          fillColor.slice(-2),
+          16
+        )}, ${opacity})`;
+        ctx.fill();
+        ctx.lineWidth = lineThickness;
+        ctx.strokeStyle = strokeColor;
+        ctx.stroke();
+      }
+
+      canvas.addEventListener("mousedown", e => {
+        startX = e.offsetX;
+        startY = e.offsetY;
+        isDragging = true;
+      });
+
+      canvas.addEventListener("mousemove", e => {
+        if (isDragging) {
+          // Clear the canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Calculate current radius
+          let currentRadius = Math.sqrt(
+            Math.pow(startX - e.offsetX, 2) + Math.pow(startY - e.offsetY, 2)
+          );
+          drawCircle(startX, startY, currentRadius);
+        }
+      });
+
+      canvas.addEventListener("mouseup", () => {
+        isDragging = false;
+      });
+
+      // Event listeners for input changes
+      document.getElementById("strokeColor").addEventListener("change", e => {
+        strokeColor = e.target.value;
+      });
+
+      document.getElementById("fillColor").addEventListener("change", e => {
+        fillColor = e.target.value;
+      });
+
+      document.getElementById("thickness").addEventListener("change", e => {
+        lineThickness = e.target.value;
+      });
+
+      document.getElementById("opacity").addEventListener("change", e => {
+        opacity = e.target.value;
+      });
+    </script>
+  </body>
+</html>
