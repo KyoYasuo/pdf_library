@@ -77,6 +77,7 @@ class SquareEditor extends AnnotationEditor {
     this.paths = [];
     this.bezierPath2D = [];
     this.allRawPaths = [];
+    this.print_paths = [];
     this.currentPath = [];
     this.scaleFactor = 1;
     this.translationX = this.translationY = 0;
@@ -353,7 +354,7 @@ class SquareEditor extends AnnotationEditor {
   }
 
   setParent(parent) {
-    console.log("SquareEditor.setParent", parent);
+    // console.log("SquareEditor.setParent", parent);
     if (!this.parent && parent) {
       // We've a parent hence the rescale will be handled thanks to the
       // ResizeObserver.
@@ -441,7 +442,7 @@ class SquareEditor extends AnnotationEditor {
     ctx.miterLimit = 10;
     ctx.strokeStyle = this.#rgbaColorWithOpacity(color, opacity);
     ctx.fillStyle =  this.#rgbaColorWithOpacity(backgroundcolor, backgroundopacity);
-    console.log("setStroke: ", ctx.strokeStyle, ctx.lineWidth, ctx.fillStyle, this.backgroundcolor, backgroundcolor);
+    // console.log("setStroke: ", ctx.strokeStyle, ctx.lineWidth, ctx.fillStyle, this.backgroundcolor, backgroundcolor);
   }
   #rgbaColorWithOpacity(hex, opacity) {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -480,14 +481,14 @@ class SquareEditor extends AnnotationEditor {
     this.startX = x;
     this.startY = y;
     this.#hasSomethingToDraw = false;
-    console.log("startDrawing: currentPath", this.currentPath[0]);
+    // console.log("startDrawing: currentPath", this.currentPath[0]);
     this.#setStroke();
     
     this.#requestFrameCallback = () => {
       this.#drawPoints();
       if (this.#requestFrameCallback) {
         window.requestAnimationFrame(this.#requestFrameCallback);
-        console.log("this.requestFrameCallback: ", this.#requestFrameCallback);
+        // console.log("this.requestFrameCallback: ", this.#requestFrameCallback);
       }
     };
     window.requestAnimationFrame(this.#requestFrameCallback);
@@ -529,7 +530,7 @@ class SquareEditor extends AnnotationEditor {
     fillWidth = width + (width>=0 ? -this.linewidth: this.linewidth);
     fillHeight = height + (height>=0 ? -this.linewidth: this.linewidth);
     ctx.fillRect(fillX, fillY, fillWidth, fillHeight);
-    console.log("drawPoints: ", this.startX, this.startY, width, height);
+    // console.log("drawPoints: ", this.startX, this.startY, width, height);
     ctx.restore();
 
   }
@@ -538,8 +539,8 @@ class SquareEditor extends AnnotationEditor {
     if (this.currentPath.length === 0) {
       return;
     }
-    this.endX = this.currentPath[0].x;
-    this.endY = this.currentPath[0].y;
+    this.endX = this.currentPath[0][0];
+    this.endY = this.currentPath[0][1];
   }
 
   /**
@@ -569,20 +570,22 @@ class SquareEditor extends AnnotationEditor {
     }
     const path2D = this.#currentPath2D;
     const currentPath = this.currentPath;
-    console.log(currentPath);
+    // console.log(currentPath);
     this.currentPath = [];
     this.#currentPath2D = new Path2D();
     // console.log("stopDrawing: ", currentPath, path2D)
     const cmd = () => {
       const width = currentPath[0][0] - this.startX;
       const height = currentPath[0][1] - this.startY;
-      console.log("cmd: ", this.startX, this.startY, width, height);
+      // console.log("cmd: ", this.startX, this.startY, width, height);
       this.paths.push([this.startX, this.startY, width, height]);
+      this.print_paths.push([this.startX, this.startY, this.endX, this.endY]);
       this.rebuild();
     };
 
     const undo = () => {
       this.paths.pop();
+      this.print_paths.pop();
       if (this.paths.length === 0) {
         this.remove();
       } else {
@@ -609,7 +612,7 @@ class SquareEditor extends AnnotationEditor {
     // ctx.clearRect(this.startX, this.startY, width, height);
     let fillX, fillY, fillWidth, fillHeight;
     for (const path of this.paths){
-      console.log(this.paths, "->" ,path);
+      // console.log(this.paths, "->" ,path);
       ctx.strokeRect(path[0], path[1], path[2], path[3]);
       fillX = path[0] + (path[2]>=0 ? this.linewidth: -this.linewidth)/2;
       fillY = path[1] + (path[3]>=0 ? this.linewidth: -this.linewidth)/2;
@@ -1005,30 +1008,29 @@ class SquareEditor extends AnnotationEditor {
 
     switch (rotation) {
       case 0:
-        for (let i = 0, ii = points.length; i < ii; i += 2) {
-          points[i] += blX;
-          points[i + 1] = trY - points[i + 1];
-        }
+        points[0] += blX;
+        points[1] += blY;
+        points[2] += blX;
+        points[3] = trY - points[3];
+        
         break;
       case 90:
-        for (let i = 0, ii = points.length; i < ii; i += 2) {
-          const x = points[i];
-          points[i] = points[i + 1] + blX;
-          points[i + 1] = x + blY;
-        }
+        points[0] += blX;
+        points[1] = trY - points[1];
+        points[2] = trX - points[2];
+        points[3] += blY;
         break;
       case 180:
-        for (let i = 0, ii = points.length; i < ii; i += 2) {
-          points[i] = trX - points[i];
-          points[i + 1] += blY;
-        }
+        points[0] = trX - points[0];
+        points[1] = trY - points[1];
+        points[2] = trX - points[2];
+        points[3] = trY - points[3];
         break;
       case 270:
-        for (let i = 0, ii = points.length; i < ii; i += 2) {
-          const x = points[i];
-          points[i] = trX - points[i + 1];
-          points[i + 1] = trY - x;
-        }
+        points[0] = trX - points[0];
+        points[1] += blY;
+        points[2] += blX;
+        points[3] = trY - points[3];
         break;
       default:
         throw new Error("Invalid rotation");
@@ -1072,6 +1074,45 @@ class SquareEditor extends AnnotationEditor {
     return points;
   }
 
+  static #toPDFCoordinatesForSquare(path, rect, rotation) {
+    const [blX, blY, trX, trY] = rect;
+    let [startX, startY, endX, endY] = path;
+
+    switch (rotation) {
+        case 0:
+            startX += blX;
+            startY = trY - startY;
+            endX += blX;
+            endY = trY - endY;
+            break;
+        case 90:
+            const tempStartX90 = startX;
+            startX = startY + blX;
+            startY = tempStartX90 + blY;
+            const tempEndX90 = endX;
+            endX = endY + blX;
+            endY = tempEndX90 + blY;
+            break;
+        case 180:
+            startX = trX - startX;
+            startY += blY;
+            endX = trX - endX;
+            endY += blY;
+            break;
+        case 270:
+            const tempStartX270 = startX;
+            startX = trX - startY;
+            startY = trY - tempStartX270;
+            const tempEndX270 = endX;
+            endX = trX - endY;
+            endY = trY - tempEndX270;
+            break;
+        default:
+            throw new Error("Invalid rotation");
+    }
+
+    return [startX, startY, endX, endY];
+  }
   /**
    * Transform and serialize the paths.
    * @param {number} s - scale factor
@@ -1079,21 +1120,23 @@ class SquareEditor extends AnnotationEditor {
    * @param {number} ty - ordinate of the translation
    * @param {Array<number>} rect - the bounding box of the annotation
    */
-  #serializePaths(s, tx, ty, rect) {
+  #serializePaths(scale, translateX, translateY, rect, rotation) {
     const paths = [];
     const padding = this.thickness / 2;
-    const shiftX = s * tx + padding;
-    const shiftY = s * ty + padding;
-    for (const bezier of this.paths) {
-      const buffer = [];
-      const points = [];
-        buffer.push(bezier);
-        points.push(bezier);
-      
-      paths.push({
-        bezier: SquareEditor.#toPDFCoordinates(buffer, rect, this.rotation),
-        points: SquareEditor.#toPDFCoordinates(points, rect, this.rotation),
-      });
+    const shiftX = scale * translateX + padding;
+    const shiftY = scale * translateY + padding;
+    // console.log("shiftX, shiftY: ", shiftX, shiftY);
+    for (const square of this.print_paths) {
+      const [startX, startY, endX, endY] = square;
+      // console.log("Square-----", [startX, startY, endX, endY]);
+      const scaledStartX = scale * startX + shiftX;
+      const scaledStartY = scale * startY + shiftY;
+      const scaledEndX = scale * endX + shiftX;
+      const scaledEndY = scale * endY + shiftY;
+      console.log([scaledStartX, scaledStartY, scaledEndX, scaledEndY]);
+      const pdf_path =  SquareEditor.#toPDFCoordinatesForSquare([scaledStartX, scaledStartY, scaledEndX, scaledEndY], rect, rotation);
+      // // Create the path data for the square
+      paths.push(pdf_path);
     }
 
     return paths;
@@ -1236,28 +1279,15 @@ class SquareEditor extends AnnotationEditor {
     if (this.isEmpty()) {
       return null;
     }
-
     const rect = this.getRect(0, 0);
     const color = AnnotationEditor._colorManager.convert(this.ctx.strokeStyle);
     const backgroundcolor = AnnotationEditor._colorManager.convert(this.ctx.fillStyle);
     // console.log("square-serialize: ", color, backgroundcolor);
-    console.log("square-serialize: ", 
-      AnnotationEditorType.SQUARE,
-      color,
-      this.thickness,
-      this.opacity,
-      this.paths,
-      this.pageIndex,
-      rect,
-      this.rotation,
-      this._structTreeParentId,
-      backgroundcolor,
-      this.backgroundopacity,
-    );
+
     return {
-      annotationType: AnnotationEditorType.INK,
+      annotationType: AnnotationEditorType.SQUARE,
       color,
-      thickness: this.thickness,
+      thickness: this.linewidth,
       opacity: this.opacity,
       // backgroundcolor,
       // backgroundopacity: this.backgroundopacity,
@@ -1265,8 +1295,11 @@ class SquareEditor extends AnnotationEditor {
         this.scaleFactor / this.parentScale,
         this.translationX,
         this.translationY,
-        rect
+        rect,
+        this.rotation
       ),
+      backgroundcolor: backgroundcolor,
+      backgroundopacity: this.backgroundopacity,
       pageIndex: this.pageIndex,
       rect,
       rotation: this.rotation,

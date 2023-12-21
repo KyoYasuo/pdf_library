@@ -1046,50 +1046,55 @@ class CircleEditor extends AnnotationEditor {
     return points;
   }
 
-  /**
-   * Transform and serialize the paths.
-   * @param {number} s - scale factor
-   * @param {number} tx - abscissa of the translation
-   * @param {number} ty - ordinate of the translation
-   * @param {Array<number>} rect - the bounding box of the annotation
-   */
-  // #serializePaths(s, tx, ty, rect) {
-  //   const paths = [];
-  //   const padding = this.thickness / 2;
-  //   const shiftX = s * tx + padding;
-  //   const shiftY = s * ty + padding;
-  //   for (const bezier of this.paths) {
-  //     const buffer = [];
-  //     const points = [];
-  //     for (let j = 0, jj = bezier.length; j < jj; j++) {
-  //       const [first, control1, control2, second] = bezier[j];
-  //       const p10 = s * first[0] + shiftX;
-  //       const p11 = s * first[1] + shiftY;
-  //       const p20 = s * control1[0] + shiftX;
-  //       const p21 = s * control1[1] + shiftY;
-  //       const p30 = s * control2[0] + shiftX;
-  //       const p31 = s * control2[1] + shiftY;
-  //       const p40 = s * second[0] + shiftX;
-  //       const p41 = s * second[1] + shiftY;
+  static #toPDFCoordinatesForCircle(path, rect, rotation) {
+    const [blX, blY, trX, trY] = rect;
+    let [centerX, centerY, radius] = path;
 
-  //       if (j === 0) {
-  //         buffer.push(p10, p11);
-  //         points.push(p10, p11);
-  //       }
-  //       buffer.push(p20, p21, p30, p31, p40, p41);
-  //       points.push(p20, p21);
-  //       if (j === jj - 1) {
-  //         points.push(p40, p41);
-  //       }
-  //     }
-  //     paths.push({
-  //       bezier: CircleEditor.#toPDFCoordinates(buffer, rect, this.rotation),
-  //       points: CircleEditor.#toPDFCoordinates(points, rect, this.rotation),
-  //     });
-  //   }
+    switch (rotation) {
+      case 0:
+        centerX += blX;
+        centerY = trY - centerY;
+        break;
+      case 90:
+        const tempCenterX90 = centerX;
+        centerX = centerY + blX;
+        centerY = trX - tempCenterX90;
+        break;
+      case 180:
+        centerX = trX - centerX;
+        centerY = trY - centerY;
+        break;
+      case 270:
+        const tempCenterX270 = centerX;
+        centerX = trY - centerY;
+        centerY = tempCenterX270 + blY;
+        break;
+      default:
+        throw new Error("Invalid rotation");
+    }
 
-  //   return paths;
-  // }
+    return [centerX, centerY, radius];
+  }
+
+  #serializePaths(scale, translateX, translateY, rect, rotation) {
+      // Assuming this.circle_path represents the circle's path with [centerX, centerY, radius]
+      
+      const pdf_path = []
+      for (const circle of this.paths) {
+        const [centerX, centerY, radius] = circle;
+        const scaledCenterX = scale * centerX + scale * translateX;
+        const scaledCenterY = scale * centerY + scale * translateY;
+        const scaledRadius = scale * radius;
+  
+        pdf_path.push(CircleEditor.#toPDFCoordinatesForCircle(
+          [scaledCenterX, scaledCenterY, scaledRadius], rect, rotation
+        ));
+      }
+
+
+      // Return the path data for the circle
+      return pdf_path;
+    }
 
   /**
    * Get the bounding box containing all the paths.
@@ -1230,19 +1235,44 @@ class CircleEditor extends AnnotationEditor {
     if (this.isEmpty()) {
       return null;
     }
-
     const rect = this.getRect(0, 0);
     const color = AnnotationEditor._colorManager.convert(this.ctx.strokeStyle);
     const backgroundcolor = AnnotationEditor._colorManager.convert(this.ctx.fillStyle);
-
+    // console.log("circle-serialize: ", color, backgroundcolor);
+    console.log("circle-serialize: ", 
+      AnnotationEditorType.SQUARE,
+      color,
+      this.thickness,
+      this.opacity,
+      "path: ",this.paths,
+      "print_path: ",this.#serializePaths(
+        this.scaleFactor / this.parentScale,
+        this.translationX,
+        this.translationY,
+        rect,
+        this.rotation
+      ),
+      this.pageIndex,
+      rect,
+      this.rotation,
+      this._structTreeParentId,
+      backgroundcolor,
+      this.backgroundopacity,
+  );
     return {
       annotationType: AnnotationEditorType.CIRCLE,
       color,
-      thickness: this.thickness,
+      thickness: this.linewidth,
       opacity: this.opacity,
-      backgroundcolor,
+      paths: this.#serializePaths(
+        this.scaleFactor / this.parentScale,
+        this.translationX,
+        this.translationY,
+        rect,
+        this.rotation
+      ),
+      backgroundcolor: backgroundcolor,
       backgroundopacity: this.backgroundopacity,
-      paths: this.paths,
       pageIndex: this.pageIndex,
       rect,
       rotation: this.rotation,

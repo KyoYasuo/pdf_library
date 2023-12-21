@@ -975,6 +975,7 @@ class InkEditor extends AnnotationEditor {
       default:
         throw new Error("Invalid rotation");
     }
+    console.log("Points", points);
     return points;
   }
 
@@ -990,6 +991,7 @@ class InkEditor extends AnnotationEditor {
     const padding = this.thickness / 2;
     const shiftX = s * tx + padding;
     const shiftY = s * ty + padding;
+    console.log("shiftX, shiftY: ", shiftX, shiftY);
     for (const bezier of this.paths) {
       const buffer = [];
       const points = [];
@@ -1003,7 +1005,7 @@ class InkEditor extends AnnotationEditor {
         const p31 = s * control2[1] + shiftY;
         const p40 = s * second[0] + shiftX;
         const p41 = s * second[1] + shiftY;
-
+        console.log(  p10, p11, p20, p21, p30, p31, p40, p41);
         if (j === 0) {
           buffer.push(p10, p11);
           points.push(p10, p11);
@@ -1019,7 +1021,7 @@ class InkEditor extends AnnotationEditor {
         points: InkEditor.#toPDFCoordinates(points, rect, this.rotation),
       });
     }
-
+    console.log("Path :", paths, shiftX, shiftY, s);
     return paths;
   }
 
@@ -1182,7 +1184,7 @@ class InkEditor extends AnnotationEditor {
       color,
       this.thickness,
       this.opacity,
-      this.#serializePaths(
+      "path: ", this.#serializePaths(
         this.scaleFactor / this.parentScale,
         this.translationX,
         this.translationY,

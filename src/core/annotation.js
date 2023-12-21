@@ -474,7 +474,7 @@ class AnnotationFactory {
           break;
         case AnnotationEditorType.SQUARE:
           promises.push(
-            InkAnnotation.createNewPrintAnnotation(
+            SquareAnnotation.createNewPrintAnnotation(
               annotationGlobals,
               xref,
               annotation,
@@ -486,7 +486,7 @@ class AnnotationFactory {
           break;
         case AnnotationEditorType.CIRCLE:
           promises.push(
-            InkAnnotation.createNewPrintAnnotation(
+            CircleAnnotation.createNewPrintAnnotation(
               annotationGlobals,
               xref,
               annotation,
@@ -3486,6 +3486,7 @@ class ChoiceWidgetAnnotation extends WidgetAnnotation {
 
   async _getAppearance(evaluator, task, intent, annotationStorage) {
     if (this.data.combo) {
+
       return super._getAppearance(evaluator, task, intent, annotationStorage);
     }
 
@@ -4101,11 +4102,7 @@ class SquareAnnotation extends MarkupAnnotation {
         fillColor,
         strokeAlpha,
         fillAlpha,
-        pointsCallback: (buffer, points) => {
-          const x = points[2].x + this.borderStyle.width / 2;
-          const y = points[2].y + this.borderStyle.width / 2;
-          const width = points[3].x - points[2].x - this.borderStyle.width;
-          const height = points[1].y - points[3].y - this.borderStyle.width;
+        pointsCallback: (points) => {
           buffer.push(`${x} ${y} ${width} ${height} re`);
           if (fillColor) {
             buffer.push("B");
@@ -4118,6 +4115,111 @@ class SquareAnnotation extends MarkupAnnotation {
         },
       });
     }
+  }
+
+  static createNewDict(annotation, xref, { apRef, ap }) {
+    // Implementation will be similar to InkAnnotation's createNewDict with adjustments for SquareAnnotation properties
+    const { color, opacity, rect, rotation, thickness, backgroundcolor, backgroundopacity } = annotation;
+    const square = new Dict(xref);
+    square.set("Type", Name.get("Annot"));
+    square.set("Subtype", Name.get("Square"));
+    square.set("CreationDate", `D:${getModificationDate()}`);
+    square.set("Rect", rect);
+    square.set("F", 4);
+    square.set("Rotate", rotation);
+    // Line thickness.
+    const bs = new Dict(xref);
+    square.set("BS", bs);
+    bs.set("W", thickness);
+    // Color.
+    square.set("C", Array.from(color, c => c / 255));
+    // Opacity.
+    square.set("CA", opacity);
+    if (backgroundcolor) {
+      square.set("BackgroundColor", Array.from(backgroundcolor, c => c / 255));
+    }
+    if (backgroundopacity) {
+      square.set("BackgroundOpacity", backgroundopacity);
+    }
+    const n = new Dict(xref);
+    square.set("AP", n);
+    if (apRef) {
+      n.set("N", apRef);
+    } else {
+      n.set("N", ap);
+    }
+    return square;
+  }
+
+  static async createNewAppearanceStream(annotation, xref, params) {
+    // Implementation will be similar to InkAnnotation's createNewAppearanceStream with adjustments for SquareAnnotation properties
+    const { color, rect, thickness, opacity, backgroundcolor, backgroundopacity, paths } = annotation;
+    const appearanceBuffer = [
+      `${thickness} w 1 J`,
+      `${getPdfColor(color, /* isFill */ false)}`
+    ];
+    // Set the fill color and opacity for the background, if provided
+    if (backgroundcolor) {
+      appearanceBuffer.push(`${getPdfColor(backgroundcolor, /* isFill */ true)}`);
+    }
+    if (backgroundopacity < 1) {
+      appearanceBuffer.push("/BG0 gs");
+    }
+    if (opacity !== 1) {
+      appearanceBuffer.push("/R0 gs");
+    }
+    const buffer = [];
+
+    paths.forEach(path => {
+      const x = path[0];
+      const y = path[1];
+      const width = path[2] - path[0];
+      const height = path[3] - path[1];
+      console.log("Path->   ", path);
+      // Draw the background first for each square
+      if (backgroundcolor) {
+        buffer.push(`${x} ${y} ${width} ${height} re f`);
+      }
+      // Draw the square border for each square
+      buffer.push(`${x} ${y} ${width} ${height} re`);
+      // Stroke and/or fill for each square
+      if (color) {
+        buffer.push("B");
+      } else {
+        buffer.push("S");
+      }
+      appearanceBuffer.push(buffer.join("\n"));
+    });
+    console.log("Rect", rect);
+
+    const appearance = appearanceBuffer.join("\n");
+    const appearanceStreamDict = new Dict(xref);
+    appearanceStreamDict.set("FormType", 1);
+    appearanceStreamDict.set("Subtype", Name.get("Form"));
+    appearanceStreamDict.set("Type", Name.get("XObject"));
+    appearanceStreamDict.set("BBox", rect);
+    appearanceStreamDict.set("Length", appearance.length);
+    if (opacity !== 1 || backgroundopacity < 1) {
+      const resources = new Dict(xref);
+      const extGState = new Dict(xref);
+      if (opacity !== 1) {
+        const r0 = new Dict(xref);
+        r0.set("CA", opacity);
+        r0.set("Type", Name.get("ExtGState"));
+        extGState.set("R0", r0);
+      }
+      if (backgroundopacity < 1) {
+        const bg0 = new Dict(xref);
+        bg0.set("ca", backgroundopacity); // Fill opacity
+        bg0.set("Type", Name.get("ExtGState"));
+        extGState.set("BG0", bg0);
+      }
+      resources.set("ExtGState", extGState);
+      appearanceStreamDict.set("Resources", resources);
+    }
+    const ap = new StringStream(appearance);
+    ap.dict = appearanceStreamDict;
+    return ap;
   }
 }
 
@@ -4182,6 +4284,122 @@ class CircleAnnotation extends MarkupAnnotation {
         },
       });
     }
+  }
+
+  static createNewDict(annotation, xref, { apRef, ap }) {
+    // Similar to SquareAnnotation's createNewDict with adjustments for CircleAnnotation properties
+    const { color, opacity, rect, rotation, thickness, backgroundcolor, backgroundopacity } = annotation;
+    const circle = new Dict(xref);
+    circle.set("Type", Name.get("Annot"));
+    circle.set("Subtype", Name.get("Circle"));
+    circle.set("CreationDate", `D:${getModificationDate()}`);
+    circle.set("Rect", rect);
+    circle.set("F", 4);
+    circle.set("Rotate", rotation);
+    
+    // Line thickness
+    const bs = new Dict(xref);
+    circle.set("BS", bs);
+    bs.set("W", thickness);
+    
+    // Color
+    circle.set("C", Array.from(color, c => c / 255));
+    
+    // Opacity
+    circle.set("CA", opacity);
+    
+    if (backgroundcolor) {
+      circle.set("BackgroundColor", Array.from(backgroundcolor, c => c / 255));
+    }
+    
+    if (backgroundopacity) {
+      circle.set("BackgroundOpacity", backgroundopacity);
+    }
+    
+    const n = new Dict(xref);
+    circle.set("AP", n);
+    if (apRef) {
+      n.set("N", apRef);
+    } else {
+      n.set("N", ap);
+    }
+  
+    return circle;
+  }
+
+  static createNewAppearanceStream(annotation, xref, params) {
+    // Similar to SquareAnnotation's createNewAppearanceStream with adjustments for CircleAnnotation properties
+    const { color, rect, thickness, opacity, backgroundcolor, backgroundopacity } = annotation;
+    const appearanceBuffer = [
+      `${thickness} w 1 J`,
+      `${getPdfColor(color, /* isFill */ false)}`
+    ];
+    
+    // Set the fill color and opacity for the background, if provided
+    if (backgroundcolor) {
+      appearanceBuffer.push(`${getPdfColor(backgroundcolor, /* isFill */ true)}`);
+    }
+    
+    if (backgroundopacity < 1) {
+      appearanceBuffer.push("/BG0 gs");
+    }
+    
+    if (opacity !== 1) {
+      appearanceBuffer.push("/R0 gs");
+    }
+    
+    // Draw the background for the circle if provided
+    if (backgroundcolor) {
+      const cx = (rect[2] + rect[0]) / 2;
+      const cy = (rect[3] + rect[1]) / 2;
+      const r = Math.min((rect[2] - rect[0]), (rect[3] - rect[1])) / 2;
+      appearanceBuffer.push(`${cx} ${cy} ${r} 0 360 arc f`);
+    }
+    
+    // Draw the circle border
+    const x = (rect[2] + rect[0]) / 2;
+    const y = (rect[3] + rect[1]) / 2;
+    const r = Math.min((rect[2] - rect[0]), (rect[3] - rect[1])) / 2;
+    appearanceBuffer.push(`${x} ${y} ${r} 0 360 arc`);
+  
+    // Stroke and/or fill for the circle
+    if (color) {
+      appearanceBuffer.push("B");
+    } else {
+      appearanceBuffer.push("S");
+    }
+  
+    const appearance = appearanceBuffer.join("\n");
+    const appearanceStreamDict = new Dict(xref);
+    appearanceStreamDict.set("FormType", 1);
+    appearanceStreamDict.set("Subtype", Name.get("Form"));
+    appearanceStreamDict.set("Type", Name.get("XObject"));
+    appearanceStreamDict.set("BBox", rect);
+    appearanceStreamDict.set("Length", appearance.length);
+  
+    if (opacity !== 1 || backgroundopacity < 1) {
+      const resources = new Dict(xref);
+      const extGState = new Dict(xref);
+      if (opacity !== 1) {
+        const r0 = new Dict(xref);
+        r0.set("CA", opacity);
+        r0.set("Type", Name.get("ExtGState"));
+        extGState.set("R0", r0);
+      }
+      if (backgroundopacity < 1) {
+        const bg0 = new Dict(xref);
+        bg0.set("ca", backgroundopacity); // Fill opacity
+        bg0.set("Type", Name.get("ExtGState"));
+        extGState.set("BG0", bg0);
+      }
+      resources.set("ExtGState", extGState);
+      appearanceStreamDict.set("Resources", resources);
+    }
+  
+    const ap = new StringStream(appearance);
+    ap.dict = appearanceStreamDict;
+    
+    return ap;
   }
 }
 
@@ -4288,6 +4506,7 @@ class InkAnnotation extends MarkupAnnotation {
     this.data.inkLists = [];
                                                                   
     const rawInkLists = dict.getArray("InkList");
+    console.log("data.rawInkLists--->",rawInkLists);
     if (!Array.isArray(rawInkLists)) {
       return;
     }
@@ -4304,7 +4523,7 @@ class InkAnnotation extends MarkupAnnotation {
         });
       }
     }
-
+    console.log("data.inkLists--->",this.data.inkLists);
     if (!this.appearance) {
       // The default stroke color is black.
       const strokeColor = this.color ? getPdfColorArray(this.color) : [0, 0, 0];
@@ -4327,7 +4546,7 @@ class InkAnnotation extends MarkupAnnotation {
       if (!Util.intersect(this.rectangle, bbox)) {
         this.rectangle = bbox;
       }
-
+      console.log("InkAnnotation.constructor: ", strokeColor, strokeAlpha, borderAdjust, this.data.inkLists);
       this._setDefaultAppearance({
         xref,
         extra: `${borderWidth} w`,
@@ -4389,7 +4608,7 @@ class InkAnnotation extends MarkupAnnotation {
     } else {
       n.set("N", ap);
     }
-
+    console.log("InkAnnotation----createNewDict:", ink);
     return ink;
   }
 
@@ -4418,6 +4637,7 @@ class InkAnnotation extends MarkupAnnotation {
           .join(" ");
         buffer.push(`${curve} c`);
       }
+      console.log("Bezier-> ", bezier);
       buffer.push("S");
       appearanceBuffer.push(buffer.join("\n"));
     }
@@ -4443,7 +4663,7 @@ class InkAnnotation extends MarkupAnnotation {
 
     const ap = new StringStream(appearance);
     ap.dict = appearanceStreamDict;
-
+    console.log("InkAnnotation----createNewStream:", ap);
     return ap;
   }
 }

@@ -208,7 +208,7 @@ class AnnotationStorage {
         }
       }
     }
-    console.log("Serializable: ----", map, hash.hexdigest(), transfer);
+    console.log("Annotation_storage.Serializable: ----", map, hash.hexdigest(), transfer);
     return map.size > 0
       ? { map, hash: hash.hexdigest(), transfer }
       : SerializableEmpty;
@@ -237,6 +237,7 @@ class PrintAnnotationStorage extends AnnotationStorage {
    */
   // eslint-disable-next-line getter-return
   get print() {
+    // console.log("Should not call PrintAnnotationStorage.print");
     unreachable("Should not call PrintAnnotationStorage.print");
   }
 
@@ -245,6 +246,7 @@ class PrintAnnotationStorage extends AnnotationStorage {
    * @ignore
    */
   get serializable() {
+    // console.log("PrintAnnotationStorage: ----", this.#serializable);
     return this.#serializable;
   }
 }

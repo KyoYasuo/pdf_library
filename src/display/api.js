@@ -1356,7 +1356,7 @@ class PDFPageProxy {
    */
   getAnnotations({ intent = "display" } = {}) {
     const intentArgs = this._transport.getRenderingIntent(intent);
-
+    console.log("API.getAnnotations", this._pageIndex, intentArgs);
     return this._transport.getAnnotations(
       this._pageIndex,
       intentArgs.renderingIntent
@@ -2854,7 +2854,7 @@ class WorkerTransport {
       );
     }
     const { map, transfer } = this.annotationStorage.serializable;
-
+    // console.log("API: saveDocument", map, transfer);
     return this.messageHandler
       .sendWithPromise(
         "SaveDocument",
@@ -2924,6 +2924,7 @@ class WorkerTransport {
   }
 
   getAnnotations(pageIndex, intent) {
+    console.log("API.getAnnotations", pageIndex, intent);
     return this.messageHandler.sendWithPromise("GetAnnotations", {
       pageIndex,
       intent,

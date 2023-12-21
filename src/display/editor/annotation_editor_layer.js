@@ -249,7 +249,7 @@ class AnnotationEditorLayer {
     const editor = this.#createAndAddNewEditor(
       { offsetX: 0, offsetY: 0 },
       /* isCentered = */ false,
-      AnnotationEditorType.SQUARE // Assuming there's a parameter to specify the editor type
+      // AnnotationEditorType.SQUARE // Assuming there's a parameter to specify the editor type
     );
     editor.setInBackground();
   }
@@ -280,7 +280,7 @@ class AnnotationEditorLayer {
     const editor = this.#createAndAddNewEditor(
       { offsetX: 0, offsetY: 0 },
       /* isCentered = */ false,
-      AnnotationEditorType.CIRCLE // Assuming there's a parameter to specify the editor type
+      // AnnotationEditorType.CIRCLE // Assuming there's a parameter to specify the editor type
     );
     editor.setInBackground();
   }

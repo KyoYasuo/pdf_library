@@ -2657,7 +2657,8 @@ class InkAnnotationElement extends AnnotationElement {
     // directly and to draw both straight lines and curves.
     this.svgElementName = "svg:polyline";
     this.annotationEditorType = AnnotationEditorType.INK;
-  
+    console.log("InkAnnotationElement: ", this.container);
+
   }
 
   render() {
@@ -2700,7 +2701,7 @@ class InkAnnotationElement extends AnnotationElement {
       if (!data.popupRef && this.hasPopupData) {
         this._createPopup();
       }
-
+      console.log("Polyline: ", polyline);
       svg.append(polyline);
     }
 
