@@ -437,7 +437,7 @@ class CircleEditor extends AnnotationEditor {
     ctx.miterLimit = 10;
     ctx.strokeStyle = this.#rgbaColorWithOpacity(color, opacity);
     ctx.fillStyle =  this.#rgbaColorWithOpacity(backgroundcolor, backgroundopacity);
-    console.log("setStroke: ", ctx.strokeStyle, ctx.lineWidth, ctx.fillStyle, this.backgroundcolor, backgroundcolor);
+    // console.log("setStroke: ", ctx.strokeStyle, ctx.lineWidth, ctx.fillStyle, this.backgroundcolor, backgroundcolor);
   }
   #rgbaColorWithOpacity(hex, opacity) {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -476,7 +476,7 @@ class CircleEditor extends AnnotationEditor {
     this.startX = x;
     this.startY = y;
     this.#hasSomethingToDraw = false;
-    console.log("startDrawing: currentPath", this.currentPath[0]);
+    // console.log("startDrawing: currentPath", this.currentPath[0]);
     // this.#setStroke();
     let currentRadius = Math.sqrt(
       Math.pow(this.startX - x, 2) + Math.pow(this.startY - y, 2)
@@ -522,7 +522,7 @@ class CircleEditor extends AnnotationEditor {
     )
     this.#drawCircle(this.startX, this.startY, currentRadius);
 
-    console.log("drawCircle: ", this.startX, this.startY, x, y, currentRadius);
+    // console.log("drawCircle: ", this.startX, this.startY, x, y, currentRadius);
 
   }
 
@@ -553,11 +553,11 @@ class CircleEditor extends AnnotationEditor {
    
     
     const currentPath = this.currentPath;
-    console.log(currentPath);
+    // console.log(currentPath);
     this.currentPath = [];
     // console.log("stopDrawing: ", currentPath, path2D)
     const cmd = () => {
-      console.log("cmd: ", this.startX, this.startY);
+      // console.log("cmd: ", this.startX, this.startY);
       this.paths.push([this.startX, this.startY, this.endX, this.endY]);
       this.rebuild();
     };
@@ -1077,24 +1077,24 @@ class CircleEditor extends AnnotationEditor {
   }
 
   #serializePaths(scale, translateX, translateY, rect, rotation) {
-      // Assuming this.circle_path represents the circle's path with [centerX, centerY, radius]
-      
-      const pdf_path = []
-      for (const circle of this.paths) {
-        const [centerX, centerY, radius] = circle;
-        const scaledCenterX = scale * centerX + scale * translateX;
-        const scaledCenterY = scale * centerY + scale * translateY;
-        const scaledRadius = scale * radius;
+    const pdf_path = []
+    for (const circle of this.paths) {
+      // Extract the centerX, centerY, and calculate radius from endX, endY
+      const [centerX, centerY, endX, endY] = circle;
+      const radius = Math.sqrt(Math.pow(endX - centerX, 2) + Math.pow(endY - centerY, 2));
   
-        pdf_path.push(CircleEditor.#toPDFCoordinatesForCircle(
-          [scaledCenterX, scaledCenterY, scaledRadius], rect, rotation
-        ));
-      }
-
-
-      // Return the path data for the circle
-      return pdf_path;
+      const scaledCenterX = scale * centerX + scale * translateX;
+      const scaledCenterY = scale * centerY + scale * translateY;
+      const scaledRadius = scale * radius;
+  
+      pdf_path.push(CircleEditor.#toPDFCoordinatesForCircle(
+        [scaledCenterX, scaledCenterY, scaledRadius], rect, rotation
+      ));
     }
+  
+    // Return the path data for the circle
+    return pdf_path;
+  }
 
   /**
    * Get the bounding box containing all the paths.
@@ -1115,7 +1115,7 @@ class CircleEditor extends AnnotationEditor {
       xMax = Math.max(xMax, Math.max(path[0] + currentRadius + this.linewidth/2, path[0] - currentRadius - this.linewidth/2));
       yMax = Math.max(yMax, Math.max(path[1] + currentRadius + this.linewidth/2, path[1] - currentRadius - this.linewidth/2));
     }
-    console.log("getBox: ",xMin, yMin, xMax, yMax);
+    // console.log("getBox: ",xMin, yMin, xMax, yMax);
     return [xMin, yMin, xMax, yMax];
   }
 
@@ -1240,11 +1240,12 @@ class CircleEditor extends AnnotationEditor {
     const backgroundcolor = AnnotationEditor._colorManager.convert(this.ctx.fillStyle);
     // console.log("circle-serialize: ", color, backgroundcolor);
     console.log("circle-serialize: ", 
-      AnnotationEditorType.SQUARE,
+      AnnotationEditorType.CIRCLE,
       color,
       this.thickness,
       this.opacity,
-      "path: ",this.paths,
+      this.linewidth,
+      "Paths:", this.paths,
       "print_path: ",this.#serializePaths(
         this.scaleFactor / this.parentScale,
         this.translationX,
@@ -1253,7 +1254,7 @@ class CircleEditor extends AnnotationEditor {
         this.rotation
       ),
       this.pageIndex,
-      rect,
+      "Rect------", rect,
       this.rotation,
       this._structTreeParentId,
       backgroundcolor,
@@ -1262,7 +1263,8 @@ class CircleEditor extends AnnotationEditor {
     return {
       annotationType: AnnotationEditorType.CIRCLE,
       color,
-      thickness: this.linewidth,
+      thickness: this.thickness,
+      linewidth: this.linewidth,
       opacity: this.opacity,
       paths: this.#serializePaths(
         this.scaleFactor / this.parentScale,

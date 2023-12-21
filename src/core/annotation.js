@@ -4178,16 +4178,11 @@ class SquareAnnotation extends MarkupAnnotation {
       console.log("Path->   ", path);
       // Draw the background first for each square
       if (backgroundcolor) {
-        buffer.push(`${x} ${y} ${width} ${height} re f`);
+        buffer.push(`${x-thickness/2} ${y-thickness/2} ${width+thickness} ${height+thickness} re f`);
       }
       // Draw the square border for each square
-      buffer.push(`${x} ${y} ${width} ${height} re`);
+      buffer.push(`${x} ${y} ${width} ${height} re S`);
       // Stroke and/or fill for each square
-      if (color) {
-        buffer.push("B");
-      } else {
-        buffer.push("S");
-      }
       appearanceBuffer.push(buffer.join("\n"));
     });
     console.log("Rect", rect);
@@ -4287,8 +4282,7 @@ class CircleAnnotation extends MarkupAnnotation {
   }
 
   static createNewDict(annotation, xref, { apRef, ap }) {
-    // Similar to SquareAnnotation's createNewDict with adjustments for CircleAnnotation properties
-    const { color, opacity, rect, rotation, thickness, backgroundcolor, backgroundopacity } = annotation;
+    const { color, opacity, rect, rotation, thickness } = annotation;
     const circle = new Dict(xref);
     circle.set("Type", Name.get("Annot"));
     circle.set("Subtype", Name.get("Circle"));
@@ -4296,79 +4290,93 @@ class CircleAnnotation extends MarkupAnnotation {
     circle.set("Rect", rect);
     circle.set("F", 4);
     circle.set("Rotate", rotation);
-    
+
     // Line thickness
     const bs = new Dict(xref);
     circle.set("BS", bs);
     bs.set("W", thickness);
-    
+
     // Color
     circle.set("C", Array.from(color, c => c / 255));
-    
+
     // Opacity
     circle.set("CA", opacity);
-    
-    if (backgroundcolor) {
-      circle.set("BackgroundColor", Array.from(backgroundcolor, c => c / 255));
-    }
-    
-    if (backgroundopacity) {
-      circle.set("BackgroundOpacity", backgroundopacity);
-    }
-    
+
     const n = new Dict(xref);
     circle.set("AP", n);
     if (apRef) {
-      n.set("N", apRef);
+        n.set("N", apRef);
     } else {
-      n.set("N", ap);
+        n.set("N", ap);
     }
-  
+    console.log("CircleAnnotation----createNewDict:", circle);
     return circle;
   }
 
-  static createNewAppearanceStream(annotation, xref, params) {
-    // Similar to SquareAnnotation's createNewAppearanceStream with adjustments for CircleAnnotation properties
-    const { color, rect, thickness, opacity, backgroundcolor, backgroundopacity } = annotation;
+  // Function to create a new appearance stream for multiple CircleAnnotations
+  static async createNewAppearanceStream(annotation, xref, params) {
+    const { color, rect, thickness, opacity, paths, backgroundcolor, backgroundopacity, linewidth } = annotation;
     const appearanceBuffer = [
-      `${thickness} w 1 J`,
-      `${getPdfColor(color, /* isFill */ false)}`
+        `${thickness} w 1 J`,
+        `${getPdfColor(color, /* isFill */ false)}`
     ];
-    
-    // Set the fill color and opacity for the background, if provided
     if (backgroundcolor) {
       appearanceBuffer.push(`${getPdfColor(backgroundcolor, /* isFill */ true)}`);
     }
-    
+
+    if (opacity !== 1) {
+        appearanceBuffer.push("/R0 gs");
+    }
     if (backgroundopacity < 1) {
       appearanceBuffer.push("/BG0 gs");
     }
-    
-    if (opacity !== 1) {
-      appearanceBuffer.push("/R0 gs");
-    }
-    
-    // Draw the background for the circle if provided
-    if (backgroundcolor) {
-      const cx = (rect[2] + rect[0]) / 2;
-      const cy = (rect[3] + rect[1]) / 2;
-      const r = Math.min((rect[2] - rect[0]), (rect[3] - rect[1])) / 2;
-      appearanceBuffer.push(`${cx} ${cy} ${r} 0 360 arc f`);
-    }
-    
-    // Draw the circle border
-    const x = (rect[2] + rect[0]) / 2;
-    const y = (rect[3] + rect[1]) / 2;
-    const r = Math.min((rect[2] - rect[0]), (rect[3] - rect[1])) / 2;
-    appearanceBuffer.push(`${x} ${y} ${r} 0 360 arc`);
-  
-    // Stroke and/or fill for the circle
-    if (color) {
-      appearanceBuffer.push("B");
-    } else {
-      appearanceBuffer.push("S");
-    }
-  
+
+    // Loop through each path to draw individual circles
+    paths.forEach(path => {
+      const kappa = 0.552284749831;
+      const x = path[0];
+      const y = path[1];
+      const radius = path[2] - thickness/2;
+      // const thickness = path[3] || 1; // Assuming thickness is provided in the path array or default to 1
+
+      // Adjust the radius for the stroke to avoid overlap
+      const strokeRadius = radius + thickness/2;
+
+      // Control point offset for the fill circle
+      const offsetX = radius * kappa; 
+      const offsetY = radius * kappa; 
+
+      // Control point offset for the stroke circle
+      const strokeOffsetX = strokeRadius * kappa; 
+      const strokeOffsetY = strokeRadius * kappa; 
+
+      // Fill circle
+      let buffer = [
+          // Draw the fill circle using the original radius
+          `${x - radius} ${y} m`,
+          `${x - radius} ${y + offsetY} ${x - offsetX} ${y + radius} ${x} ${y + radius} c`,
+          `${x + offsetX} ${y + radius} ${x + radius} ${y + offsetY} ${x + radius} ${y} c`,
+          `${x + radius} ${y - offsetY} ${x + offsetX} ${y - radius} ${x} ${y - radius} c`,
+          `${x - offsetX} ${y - radius} ${x - radius} ${y - offsetY} ${x - radius} ${y} c`,
+          "h",
+          "f" // "f" is the PDF command to fill the path
+      ];
+      // Stroke circle
+      buffer.push(
+        // Draw the stroke circle using the adjusted radius
+        `${x - strokeRadius} ${y} m`,
+        `${x - strokeRadius} ${y + strokeOffsetY} ${x - strokeOffsetX} ${y + strokeRadius} ${x} ${y + strokeRadius} c`,
+        `${x + strokeOffsetX} ${y + strokeRadius} ${x + strokeRadius} ${y + strokeOffsetY} ${x + strokeRadius} ${y} c`,
+        `${x + strokeRadius} ${y - strokeOffsetY} ${x + strokeOffsetX} ${y - strokeRadius} ${x} ${y - strokeRadius} c`,
+        `${x - strokeOffsetX} ${y - strokeRadius} ${x - strokeRadius} ${y - strokeOffsetY} ${x - strokeRadius} ${y} c`,
+        "h",
+        "S" // "S" is the PDF command to stroke the path
+      );
+
+      // Append the current circle's path to the appearance buffer
+      appearanceBuffer.push(buffer.join("\n"));
+    });
+
     const appearance = appearanceBuffer.join("\n");
     const appearanceStreamDict = new Dict(xref);
     appearanceStreamDict.set("FormType", 1);
@@ -4376,31 +4384,36 @@ class CircleAnnotation extends MarkupAnnotation {
     appearanceStreamDict.set("Type", Name.get("XObject"));
     appearanceStreamDict.set("BBox", rect);
     appearanceStreamDict.set("Length", appearance.length);
-  
     if (opacity !== 1 || backgroundopacity < 1) {
-      const resources = new Dict(xref);
-      const extGState = new Dict(xref);
-      if (opacity !== 1) {
-        const r0 = new Dict(xref);
-        r0.set("CA", opacity);
-        r0.set("Type", Name.get("ExtGState"));
-        extGState.set("R0", r0);
-      }
-      if (backgroundopacity < 1) {
-        const bg0 = new Dict(xref);
-        bg0.set("ca", backgroundopacity); // Fill opacity
-        bg0.set("Type", Name.get("ExtGState"));
-        extGState.set("BG0", bg0);
-      }
-      resources.set("ExtGState", extGState);
-      appearanceStreamDict.set("Resources", resources);
+        const resources = new Dict(xref);
+        const extGState = new Dict(xref);
+        if(opacity != 1) {
+          const r0 = new Dict(xref);
+          r0.set("CA", opacity); // Use 'CA' for stroke opacity in the graphics state
+          // r0.set("ca", opacity); // Use 'ca' for fill opacity in the graphics state
+          r0.set("Type", Name.get("ExtGState"));
+          extGState.set("R0", r0);
+        }
+        if (backgroundopacity < 1) {
+          const bg = new Dict(xref);
+          bg.set("ca", backgroundopacity);
+          bg.set("Type", Name.get("ExtGState"));
+          extGState.set("BG0", bg);
+        }
+
+        resources.set("ExtGState", extGState);
+        appearanceStreamDict.set("Resources", resources);
+        
+        // // Update the appearance buffer to reference the graphics state
+        // appearanceBuffer.splice(2, 0, "/R0 gs"); // Insert the reference at the correct position
     }
-  
+    
     const ap = new StringStream(appearance);
     ap.dict = appearanceStreamDict;
-    
+    console.log("CircleAnnotation----createNewAppearanceStream:", appearanceStreamDict);
     return ap;
   }
+  
 }
 
 class PolylineAnnotation extends MarkupAnnotation {
@@ -4637,7 +4650,7 @@ class InkAnnotation extends MarkupAnnotation {
           .join(" ");
         buffer.push(`${curve} c`);
       }
-      console.log("Bezier-> ", bezier);
+      
       buffer.push("S");
       appearanceBuffer.push(buffer.join("\n"));
     }
